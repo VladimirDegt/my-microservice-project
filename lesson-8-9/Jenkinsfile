@@ -1,0 +1,44 @@
+pipeline {
+  agent {
+    kubernetes {
+      label 'kaniko'
+      defaultContainer 'kaniko'
+    }
+  }
+  environment {
+    AWS_REGION = 'us-west-2'
+    ECR_REPO = 'your-account-id.dkr.ecr.us-west-2.amazonaws.com/your-django-image'
+    CHART_REPO = 'https://github.com/your-org/your-helm-charts-repo.git'
+    CHART_PATH = 'charts/django-app/values.yaml'
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
+  }
+  stages {
+    stage('Build & Push Docker Image') {
+      steps {
+        container('kaniko') {
+          sh '''
+            /kaniko/executor \
+              --context $WORKSPACE \
+              --dockerfile $WORKSPACE/Dockerfile \
+              --destination $ECR_REPO:$IMAGE_TAG \
+              --oci-layout-path /kaniko/oci-image-layout
+          '''
+        }
+      }
+    }
+    stage('Update Helm values.yaml') {
+      steps {
+        sh '''
+          git clone $CHART_REPO charts-repo
+          cd charts-repo
+          sed -i "s/tag: .*/tag: $IMAGE_TAG/" $CHART_PATH
+          git config user.email "ci@example.com"
+          git config user.name "ci-bot"
+          git add $CHART_PATH
+          git commit -m "Update image tag to $IMAGE_TAG [ci skip]"
+          git push origin main
+        '''
+      }
+    }
+  }
+} 
