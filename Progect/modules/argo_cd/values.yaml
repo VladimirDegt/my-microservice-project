@@ -1,0 +1,6 @@
+app:
+  name: django-app
+  repoURL: https://github.com/your-org/your-helm-charts-repo.git
+  targetRevision: main
+  path: charts/django-app
+  destinationNamespace: django
