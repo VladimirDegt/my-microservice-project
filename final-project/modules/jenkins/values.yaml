@@ -1,0 +1,33 @@
+controller:
+  JCasC:
+    configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: "Jenkins via Helm + Terraform."
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - configuration-as-code:latest
+    - docker-workflow:latest
+    - blueocean:latest
+    - credentials-binding:latest
+    - aws-credentials:latest
+    - pipeline-utility-steps:latest
+    - kaniko:latest
+
+agent:
+  enabled: true
+  podTemplates:
+    kaniko:
+      label: kaniko
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:latest
+          command:
+            - "/busybox/cat"
+          tty: true
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: aws-ecr-creds 
